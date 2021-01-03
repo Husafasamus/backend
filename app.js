@@ -15,7 +15,7 @@ const client = new Client({
 
 client.connect();
 
-// client.query("select * from blogy;", (err, res) => {
+// client.query("select * from blogs_small;", (err, res) => {
 //     if (err) {
 //         console.log(err);
 
@@ -24,6 +24,18 @@ client.connect();
 //     }
 //     console.log();
 // });
+
+function queryCheck(err, result, res) {
+    if (err) {
+        res.writeHead(404, mime.contentType("test.json"));
+        res.write(JSON.stringify({error: "chyba databazy!"}));
+    } else {
+        res.writeHead(200, mime.contentType("test.json"));
+        res.write(JSON.stringify(result.rows));                        
+    }
+    return res.end();
+}
+
 
 let port = 550;
 
@@ -42,31 +54,37 @@ http.createServer((req, res) => {
             case "GET":
                 switch (requestName) {
                     case "blogs":
-                        client.query("select * from blogy;", (err, result) => {
-                            if (err) {
-                                res.writeHead(404, mime.contentType("test.json"));
-                                res.write(JSON.stringify({error: "chyba databazy!"}));
-                            } else {
-                                res.writeHead(200, mime.contentType("test.json"));
-                                res.write(JSON.stringify(result.rows));
-                            
-                            }
-                            return res.end();
+                        client.query("select * from blogs_small;", (err, result) => {
+                            return queryCheck(err, result, res); //dokoncit
                         });
                         break;
                     case "blog":
-                        client.query(`select * from blogy where id = ${args[0]}`, (err, result) => {
+                        client.query(`select * from blogs_small where id = ${args[0]}`, (err, result) => {
                             if (err) {
                                 res.writeHead(404, mime.contentType("test.json"));
                                 res.write(JSON.stringify({error: "chyba databazy!"}));
                             } else {
                                 res.writeHead(200, mime.contentType("test.json"));
                                 res.write(JSON.stringify(result.rows[0]));
-                            
                             }
                             return res.end();
                         });
                         break;
+                    case "blogWhole":
+                        client.query(`select * from blog_whole where id_blog = ${args[0]};`, (err, result) => {
+                            if (err) {
+                                res.writeHead(404, mime.contentType("test.json"));
+                                res.write(JSON.stringify({error: "chyba databazy!"}));
+                            } else {
+                                res.writeHead(200, mime.contentType("test.json"));
+                                res.write(JSON.stringify(result.rows[0]));
+                            }
+                            return res.end();
+                        });
+                    
+                    break;
+                    
+                      
                 }
                 break;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,13 +100,16 @@ http.createServer((req, res) => {
                         body = JSON.parse(body);
                         switch (requestName) {
                             case "blog":                             
-                                client.query(`insert into blogy (title, text) values ('${body.title}', '${body.text}'); SELECT * from blogy where id = currval('blogy_id_seq');`, (err, result) => { 
+                                  client.query(`
+                                    insert into blogs_small (title, text) values ('${body.title}', '${body.text}'); 
+                                    insert into blog_whole values (currval('blogs_small_id_seq'), '${body.textWhole}');      
+                                    SELECT * from blogs_small where id = currval('blogs_small_id_seq');`, (err, result) => { 
                                     if (err) {
                                         res.writeHead(404, mime.contentType("test.json"));
                                         res.write(JSON.stringify({error: "chyba databazy!"}));
                                     } else {
                                         res.writeHead(200, mime.contentType("test.json"));
-                                        res.write(JSON.stringify(result[1].rows[0]));               
+                                        res.write(JSON.stringify(result[2].rows[0]));               
                                     }
                                     return res.end();
                                 });
@@ -111,7 +132,7 @@ http.createServer((req, res) => {
                         body = JSON.parse(body);
                         switch (requestName) {
                             case "blog":                             
-                                client.query(`update blogy SET title='${body.title}', text='${body.text}' WHERE id=${body.id}; SELECT * from blogy where id = ${body.id};`, (err, result) => { 
+                                client.query(`update blogs_small SET title='${body.title}', text='${body.text}' WHERE id=${body.id}; SELECT * from blogs_small where id = ${body.id};`, (err, result) => { 
                                     if (err) {
                                         res.writeHead(404, mime.contentType("test.json"));
                                         res.write(JSON.stringify({error: "chyba databazy!"}));
@@ -132,7 +153,7 @@ http.createServer((req, res) => {
                 
                 switch (requestName) {
                     case "blog":
-                        client.query(`delete from blogy where id = ${args[0]}`, (err, result) => {
+                        client.query(`delete from blog_whole where id_blog = ${args[0]}; delete from blogs_small where id = ${args[0]}; `, (err, result) => {
                             if (err) {
                                 res.writeHead(404, mime.contentType("test.json"));
                                 res.write(JSON.stringify({error: "chyba databazy!"}));
