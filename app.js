@@ -15,80 +15,46 @@ const client = new Client({
 
 client.connect();
 
-// client.query("select * from blogs_small;", (err, res) => {
-//     if (err) {
-//         console.log(err);
-
-//     } else {
-//         console.log(res);
-//     }
-//     console.log();
-// });
-
-function queryCheck(err, result, res) {
-    if (err) {
-        res.writeHead(404, mime.contentType("test.json"));
-        res.write(JSON.stringify({error: "chyba databazy!"}));
-    } else {
-        res.writeHead(200, mime.contentType("test.json"));
-        res.write(JSON.stringify(result.rows));                        
-    }
-    return res.end();
-}
-
-
 let port = 550;
 
 http.createServer((req, res) => {
+
     let q = url.parse(req.url, true);
 
     if (q.pathname.startsWith("/api/")) {
+
         let body = "";  
         let args = q.pathname.substring(5, q.pathname.length).split("/");
         let requestName = args[0];
         args.splice(0, 1);
           
-
         switch (req.method) {
-///////////////////////////////////////////////////////GET/////////////////////////////////////////////////////////////////////////////
-            case "GET":
+
+            case "GET": //  ---==="GET"===---         
                 switch (requestName) {
+
                     case "blogs":
                         client.query("select * from blogs_small;", (err, result) => {
-                            return queryCheck(err, result, res); //dokoncit
+                            return queryCheck(err, result, res, true); //dokoncit
                         });
                         break;
+
                     case "blog":
                         client.query(`select * from blogs_small where id = ${args[0]}`, (err, result) => {
-                            if (err) {
-                                res.writeHead(404, mime.contentType("test.json"));
-                                res.write(JSON.stringify({error: "chyba databazy!"}));
-                            } else {
-                                res.writeHead(200, mime.contentType("test.json"));
-                                res.write(JSON.stringify(result.rows[0]));
-                            }
-                            return res.end();
+                            return queryCheck(err, result, res, false);
                         });
                         break;
+
                     case "blogWhole":
                         client.query(`select * from blog_whole where id_blog = ${args[0]};`, (err, result) => {
-                            if (err) {
-                                res.writeHead(404, mime.contentType("test.json"));
-                                res.write(JSON.stringify({error: "chyba databazy!"}));
-                            } else {
-                                res.writeHead(200, mime.contentType("test.json"));
-                                res.write(JSON.stringify(result.rows[0]));
-                            }
-                            return res.end();
+                            return queryCheck(err, result, res, true);
                         });
                     
                     break;
-                    
-                      
                 }
                 break;
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            case "POST":
+
+            case "POST":  //  ---==="POST"===---
                 body = "";
                 req.on("data", (data) => {
                     body += data;
@@ -104,14 +70,7 @@ http.createServer((req, res) => {
                                     insert into blogs_small (title, text) values ('${body.title}', '${body.text}'); 
                                     insert into blog_whole values (currval('blogs_small_id_seq'), '${body.textWhole}');      
                                     SELECT * from blogs_small where id = currval('blogs_small_id_seq');`, (err, result) => { 
-                                    if (err) {
-                                        res.writeHead(404, mime.contentType("test.json"));
-                                        res.write(JSON.stringify({error: "chyba databazy!"}));
-                                    } else {
-                                        res.writeHead(200, mime.contentType("test.json"));
-                                        res.write(JSON.stringify(result[2].rows[0]));               
-                                    }
-                                    return res.end();
+                                    return queryCheck(err, result, res, 2);
                                 });
                                 break;        
                         }
@@ -120,11 +79,9 @@ http.createServer((req, res) => {
                 
                 break;
             
-            case "PUT":
+            case "PUT":  //  ---==="PUT"===---
                 body = "";
-                req.on("data", (data) => {
-                    body += data;
-                });
+                req.on("data", (data) => { body += data; });
                 req.on("end", () => {
                     if (body === "") {
                         body = null;
@@ -132,28 +89,22 @@ http.createServer((req, res) => {
                         body = JSON.parse(body);
                         switch (requestName) {
                             case "blog":                             
-                                client.query(`update blogs_small SET title='${body.title}', text='${body.text}' WHERE id=${body.id}; SELECT * from blogs_small where id = ${body.id};`, (err, result) => { 
-                                    if (err) {
-                                        res.writeHead(404, mime.contentType("test.json"));
-                                        res.write(JSON.stringify({error: "chyba databazy!"}));
-                                    } else {
-                                        res.writeHead(200, mime.contentType("test.json"));
-                                        res.write(JSON.stringify(result[1].rows[0]));               
-                                    }
-                                    return res.end();
+                                client.query(`update blogs_small SET title='${body.title}', text='${body.text}' WHERE id=${body.id}; 
+                                              SELECT * from blogs_small where id = ${body.id};`, (err, result) => { 
+                                    return queryCheck(err, result, res, 1);
                                 });
                                 break;        
                         }
                     }
                 });               
                 break;
-                
-                
-            case "DELETE":
+                         
+            case "DELETE": //  ---==="DELETE"===---
                 
                 switch (requestName) {
                     case "blog":
-                        client.query(`delete from blog_whole where id_blog = ${args[0]}; delete from blogs_small where id = ${args[0]}; `, (err, result) => {
+                        client.query(`delete from blog_whole where id_blog = ${args[0]};
+                                      delete from blogs_small where id = ${args[0]}; `, (err, result) => {
                             if (err) {
                                 res.writeHead(404, mime.contentType("test.json"));
                                 res.write(JSON.stringify({error: "chyba databazy!"}));
@@ -164,23 +115,13 @@ http.createServer((req, res) => {
                             return res.end();
                         });
                         break;
-                
                     default:
                         break; 
                 }
-
-
                 break;
-        
             default:
                 break;
-        }
-
-
-
-
-        
-    
+        } 
     } else {
         if (q.pathname === "/") {
             q.pathname += "index.html";
@@ -195,7 +136,6 @@ http.createServer((req, res) => {
                 res.writeHead(200, mime.contentType(fileName));
                 res.write(data);
             }
-
             return res.end();
         });
     }
@@ -212,3 +152,26 @@ console.log(`listening on port ${port}`);
  * TO DO!
  * 1. sql injection
  */
+
+
+function queryCheck(err, result, res, writeAll) {
+    if (err) {
+        res.writeHead(404, mime.contentType("test.json"));
+        res.write(JSON.stringify({error: "chyba databazy!"}));
+    } else {
+        res.writeHead(200, mime.contentType("test.json"));
+        res.write(JSON.stringify(writeAll ? result.rows : result.rows[0]));                        
+    }
+    return res.end();
+}
+
+function queryCheck1(err, result, res, numberRes) {
+    if (err) {
+        res.writeHead(404, mime.contentType("test.json"));
+        res.write(JSON.stringify({error: "chyba databazy!"}));
+    } else {
+        res.writeHead(200, mime.contentType("test.json"));
+        res.write(JSON.stringify(result[numberRes].rows[0]));               
+    }
+    return res.end();
+}
