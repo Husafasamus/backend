@@ -70,7 +70,7 @@ http.createServer((req, res) => {
                                     insert into blogs_small (title, text) values ('${body.title}', '${body.text}'); 
                                     insert into blog_whole values (currval('blogs_small_id_seq'), '${body.textWhole}');      
                                     SELECT * from blogs_small where id = currval('blogs_small_id_seq');`, (err, result) => { 
-                                    return queryCheck(err, result, res, 2);
+                                    return queryCheck1(err, result, res, 2);
                                 });
                                 break;        
                         }
@@ -91,7 +91,7 @@ http.createServer((req, res) => {
                             case "blog":                             
                                 client.query(`update blogs_small SET title='${body.title}', text='${body.text}' WHERE id=${body.id}; 
                                               SELECT * from blogs_small where id = ${body.id};`, (err, result) => { 
-                                    return queryCheck(err, result, res, 1);
+                                    return queryCheck1(err, result, res, 1);
                                 });
                                 break;        
                         }
