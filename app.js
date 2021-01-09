@@ -72,14 +72,19 @@ http.createServer((req, res) => {
                                     SELECT * from blogs_small where id = currval('blogs_small_id_seq');`, (err, result) => { 
                                     return queryCheck1(err, result, res, 2);
                                 });
-                                break;        
+                                break;
+                            
+                            // case "loginUser":
+
+
+                            //     break;    
                         }
                     }
                 });    
                 
                 break;
             
-            case "PUT":  //  ---==="PUT"===---
+            case "PUT":  //  ---==="PUT"===---  
                 body = "";
                 req.on("data", (data) => { body += data; });
                 req.on("end", () => {
@@ -93,7 +98,16 @@ http.createServer((req, res) => {
                                               SELECT * from blogs_small where id = ${body.id};`, (err, result) => { 
                                     return queryCheck1(err, result, res, 1);
                                 });
-                                break;        
+                                break;   
+                            
+                            case "blogWhole":
+                                client.query(`update blog_whole SET text='${body.textWhole}' WHERE id_blog=${body.id}; 
+                                              SELECT * from blog_whole where id_blog = ${body.id};`, (err, result) => { 
+                                    return queryCheck1(err, result, res, 1);
+                                });
+                                break;
+
+                                
                         }
                     }
                 });               
