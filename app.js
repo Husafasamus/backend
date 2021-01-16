@@ -74,10 +74,21 @@ http.createServer((req, res) => {
                                 });
                                 break;
                             
-                            // case "loginUser":
+                            
+                            case "loginUser":
+                                
+                                if (body.login === "admin" && body.password === "1234") {
+                                    res.writeHead(200, mime.contentType("test.json"));
+                                    res.write(JSON.stringify({msg: "success"}));
+                                }
+                                else {
+                                    res.writeHead(401, mime.contentType("test.json"));
+                                    res.write(JSON.stringify({error: "wrong password!"}));
+                                }
+                                return res.end();
+                                break;
 
-
-                            //     break;    
+                          
                         }
                     }
                 });    
