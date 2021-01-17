@@ -1,9 +1,12 @@
-//const express = require("express");
-const http = require("http");
-const url = require("url");
-const fs = require("fs");
+
+// packages
+const http = require("http"); // http requesty start serveru
+const url = require("url"); //parser url
+const fs = require("fs");   
 const mime = require("mime-types");
-const { Client } = require("pg");
+const { Client } = require("pg"); //databaza
+const sanitizer = require("string-sanitizer");
+
 
 const client = new Client({
     user: "postgres",
@@ -33,14 +36,15 @@ http.createServer((req, res) => {
             case "GET": //  ---==="GET"===---         
                 switch (requestName) {
 
-                    case "blogs":
+                    case "blogs":                 
                         client.query("select * from blogs_small;", (err, result) => {
-                            return queryCheck(err, result, res, true); //dokoncit
+                            return queryCheck(err, result, res, true); 
                         });
                         break;
 
                     case "blog":
-                        client.query(`select * from blogs_small where id = ${args[0]}`, (err, result) => {
+                        
+                        client.query(`select * from blogs_small where id = ${sanitizer.sanitize(args[0])}`, (err, result) => {
                             return queryCheck(err, result, res, false);
                         });
                         break;
@@ -49,8 +53,13 @@ http.createServer((req, res) => {
                         client.query(`select * from blog_whole where id_blog = ${args[0]};`, (err, result) => {
                             return queryCheck(err, result, res, true);
                         });
-                    
                     break;
+
+                    case "quotes":
+                        client.query(`select * from quotes`, (err, result) => {
+                            return queryCheck(err, result, res, true);
+                        });
+                    break;    
                 }
                 break;
 
