@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "mime": "^2.4.7",
+    "mime-types": "^2.1.28",
     "pg": "^8.5.1",
     "string-sanitizer": "^1.1.1"
   }

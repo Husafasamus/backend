@@ -1,10 +1,8 @@
-
-// packages
-const http = require("http"); // http requesty start serveru
-const url = require("url"); //parser url
+const http = require("http"); 
+const url = require("url"); 
 const fs = require("fs");   
 const mime = require("mime-types");
-const { Client } = require("pg"); //databaza
+const { Client } = require("pg"); 
 const sanitizer = require("string-sanitizer");
 
 
@@ -96,7 +94,14 @@ http.createServer((req, res) => {
                                 }
                                 return res.end();
                                 break;
-
+                            
+                            case "quote":
+                                client.query(`
+                                insert into quotes (text, author) values ('${body.text}', '${body.author}');     
+                                SELECT * from quotes where id = currval('quotes_id_seq');`, (err, result) => { 
+                                return queryCheck1(err, result, res, 1);
+                                });
+                                break;
                           
                         }
                     }
@@ -127,6 +132,13 @@ http.createServer((req, res) => {
                                 });
                                 break;
 
+                            case "quote":
+                                client.query(`update quotes SET text='${body.text}', author='${body.author}' WHERE id=${body.id}; 
+                                              SELECT * from quotes where id = ${body.id};`, (err, result) => { 
+                                    return queryCheck1(err, result, res, 1);
+                                });
+                                break;
+
                                 
                         }
                     }
@@ -149,6 +161,20 @@ http.createServer((req, res) => {
                             return res.end();
                         });
                         break;
+
+                        case "quote":
+                        client.query(`delete from quotes where id = ${args[0]};`, (err, result) => {
+                            if (err) {
+                                res.writeHead(404, mime.contentType("test.json"));
+                                res.write(JSON.stringify({error: "chyba databazy!"}));
+                            } else {
+                                res.writeHead(200, mime.contentType("test.json"));
+                                res.write(JSON.stringify({result: "row deleted!"}));               
+                            }
+                            return res.end();
+                        });
+                        break;
+
                     default:
                         break; 
                 }
